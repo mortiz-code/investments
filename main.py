@@ -50,7 +50,7 @@ for stock in stocks_list:
         yesterday_close_price = round(data["Close"][1], 2)
         diff = close_price - yesterday_close_price
         print(
-            f"* {symbol.ticker} > Precio de cierre (Pt-1): {close_price} | Pt-2{yesterday_close_price} | Pt-1 - Pt-2{diff}"
+            f"* {symbol.ticker} > Precio de cierre (Pt-1): {close_price} | Pt-2: {yesterday_close_price} | Diff: {diff}"
         )
     except:
         print(f"* {symbol.ticker} > Precio de cierre (Pt-1): {close_price}")
