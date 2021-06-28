@@ -1,7 +1,10 @@
 # investments
 
+<<<<<<< HEAD
 This app will use the file 'portfolio.csv'. In case it has another name, you can use it as an argument. Otherwise the application will not run.
 
+=======
+>>>>>>> parent of ee2eb1f (using csv)
 ```python
 (venv) ┌──(mat㉿kali)-[~/github/devnet/stocks] (dev)
 └─$ python main.py
