@@ -1,5 +1,15 @@
 # investments
 
+"""
+Documents:
+ Doc: https://colab.research.google.com/drive/1qPNREasgE0vhVKttNL0YyMdZE84n28_H?usp=sharing
+ import datetime
+ now = datetime.datetime.now().strftime("%Y-%m-%d")
+ import investpy
+ investpy.get_stock_historical_data(stock='AGRO',country='argentina',from_date=end, to_date=now,interval='Daily')
+"""
+
+
 ```python
 (venv) ┌──(mat㉿kali)-[~/github/devnet/stocks] (dev)
 └─$ python main.py
