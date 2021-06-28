@@ -32,9 +32,3 @@ This app will use the file 'portfolio.csv'. In case it has another name, you can
 
 -------- El capital en renta viable a la fecha 2021-06-22 es de 76732.5 --------                             
 ```
-
-```python
-(venv) ┌──(mat㉿kali)-[~/github/devnet/stocks] (dev)
-└─$ python main.py portfoliosdfs.csv
-File portfoliosdfs.csv not found.
-```
