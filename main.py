@@ -1,5 +1,6 @@
-# usr/bin/env python
+# usr/bin/env python3
 # -*- coding: utf-8 -*-
+
 
 __author__ = "Matias Ortiz"
 __email__ = "matias.ortiz@bvstv.com"
@@ -8,9 +9,12 @@ __version__ = "0.1.0"
 __copyright__ = "Copyright (c) 2021, all rights reserved."
 __license__ = "BSD 3-Clause License."
 
+
 import yfinance as yf
 from csv import reader
 from tabulate import tabulate
+from sys import argv
+from os.path import isfile
 
 
 def info(stocks_list):
@@ -28,20 +32,17 @@ def info(stocks_list):
         actual_price = data.tail(1)["Close"][0]
         d.append(f"{stock}".upper())
         e.append(f"$ {actual_price}")
-
         symbol = yf.Ticker(stock)
         data = symbol.history(period="2d")
         yerterday_close_price = data["Close"][0]
         diff = round(actual_price - yerterday_close_price, 2)
         f.append(f"$ {diff}")
-
     for i in f:
         if "-" in i:
             h.append(f"[-]")
         else:
             h.append(f"[+]")
     g = zip(d, e, f, h)
-
     print(
         tabulate(
             list(g),
@@ -51,14 +52,25 @@ def info(stocks_list):
     )
 
 
-def main():
+def read(file):
     try:
-        with open("stocks.csv", "r") as f:
+        with open(file, "r") as f:
             data = reader(f)
             for i in data:
                 info(i)
-    except FileNotFoundError as e:
-        print(e)
+    except FileNotFoundError:
+        print(f"File {file} not found.")
+        exit()
+
+
+def main():
+    if len(argv) == 2:
+        file = argv[1]
+        read(file)
+    elif isfile("portfolio.csv"):
+        read("portfolio.csv")
+    else:
+        print("CSV file not found.")
         exit()
 
 
