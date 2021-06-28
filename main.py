@@ -9,14 +9,13 @@ __version__ = "0.1.0"
 __copyright__ = "Copyright (c) 2021, all rights reserved."
 __license__ = "BSD 3-Clause License."
 
-<<<<<<< HEAD
 
 import yfinance as yf
 from csv import reader
 from tabulate import tabulate
 from sys import argv
 from os.path import isfile
-=======
+
 """
  Doc: https://colab.research.google.com/drive/1qPNREasgE0vhVKttNL0YyMdZE84n28_H?usp=sharing
  import datetime
@@ -55,7 +54,6 @@ def read_excel():
         "LMT.BA",
         "MSFT.BA",
     ]
->>>>>>> parent of ee2eb1f (using csv)
 
     return stocks_list, q_list, pc_list
 
@@ -109,7 +107,6 @@ def get_real_price(stocks_list):
             prepost=True,
             rounding=True,
         )
-<<<<<<< HEAD
         actual_price = data.tail(1)["Close"][0]
         d.append(f"{stock}".upper())
         e.append(f"$ {actual_price}")
@@ -153,7 +150,6 @@ def main():
     else:
         print("CSV file not found.")
         exit()
-=======
 
         arg2 = a.tail(1)["Close"][0]
         print(f"* {arg} > $ {arg2}")
@@ -164,7 +160,6 @@ def main():
     prices = get_latest_price(stocks_list)
     get_real_price(stocks_list)
     beneficio(prices, q_list, pc_list, stocks_list)
->>>>>>> parent of ee2eb1f (using csv)
 
 
 if __name__ == "__main__":
