@@ -3,8 +3,7 @@
 This app will use the file 'portfolio.csv'. In case it has another name, you can use it as an argument. Otherwise the application will not run.
 
 ```python
-(venv) ┌──(mat㉿kali)-[~/github/devnet/stocks] (main)
-└─$ /home/mat/github/devnet/stocks/venv/bin/python /home/mat/github/devnet/stocks/main.py
+└─$ python main.py
 
 --------------------- Information extraida de YahooFinance ---------------------
 * AGRO.BA > Pt-1: 26.9 | Pt-1 - Pt2: 1.0
