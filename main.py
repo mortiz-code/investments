@@ -26,7 +26,7 @@ def info(stocks_list):
             rounding=True,
         )
         actual_price = data.tail(1)["Close"][0]
-        d.append(f"{stock}")
+        d.append(f"{stock}".upper())
         e.append(f"$ {actual_price}")
 
         symbol = yf.Ticker(stock)
@@ -45,7 +45,7 @@ def info(stocks_list):
     print(
         tabulate(
             list(g),
-            headers=["Stock", "Last Price", "Diff", "Variation"],
+            headers=["Stock", "Current", "Diff", "Variation"],
             tablefmt="simple",
         )
     )
