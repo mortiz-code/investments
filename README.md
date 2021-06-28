@@ -3,41 +3,34 @@
 This app will use the file 'portfolio.csv'. In case it has another name, you can use it as an argument. Otherwise the application will not run.
 
 ```python
-(venv) ┌──(mat㉿kali)-[~/github/devnet/stocks] (dev)
-└─$ python main.py
-Stock    Current    Diff      Variation
--------  ---------  --------  -----------
-AGRO.BA  $ 24.0     $ -1.2    [-]
-ADGO.BA  $ 3515.5   $ -315.0  [-]
-AMZN.BA  $ 4024.0   $ 14.0    [+]
-BABA.BA  $ 4346.5   $ 248.5   [+]
-GLNT.BA  $ 6422.5   $ 0.0     [+]
-MELI.BA  $ 4370.5   $ 57.0    [+]
-TSLA.BA  $ 7596.5   $ -23.0   [-]
-GOLD.BA  $ 3570.5   $ 0.0     [+]
-LMT.BA   $ 3274.0   $ 74.0    [+]
-MSFT.BA  $ 4538.5   $ 24.5    [+]
-JPM.BA   $ 5274.0   $ 100.5   [+]
-X.BA     $ 1359.5   $ -11.5   [-]
-```
+(venv) ┌──(mat㉿kali)-[~/github/devnet/stocks] (main)
+└─$ /home/mat/github/devnet/stocks/venv/bin/python /home/mat/github/devnet/stocks/main.py
 
-```python
-(venv) ┌──(mat㉿kali)-[~/github/devnet/stocks] (dev)
-└─$ python main.py portfolio.csv
-Stock    Current    Diff      Variation
--------  ---------  --------  -----------
-AGRO.BA  $ 24.0     $ -1.2    [-]
-ADGO.BA  $ 3515.5   $ -315.0  [-]
-AMZN.BA  $ 4024.0   $ 14.0    [+]
-BABA.BA  $ 4346.5   $ 248.5   [+]
-GLNT.BA  $ 6422.5   $ 0.0     [+]
-MELI.BA  $ 4370.5   $ 57.0    [+]
-TSLA.BA  $ 7596.5   $ -23.0   [-]
-GOLD.BA  $ 3570.5   $ 0.0     [+]
-LMT.BA   $ 3274.0   $ 74.0    [+]
-MSFT.BA  $ 4538.5   $ 24.5    [+]
-JPM.BA   $ 5274.0   $ 100.5   [+]
-X.BA     $ 1359.5   $ -11.5   [-]
+--------------------- Information extraida de YahooFinance ---------------------
+* AGRO.BA > Pt-1: 26.9 | Pt-1 - Pt2: 1.0
+* ADGO.BA > Pt-1: 3595.0 | Pt-1 - Pt2: -30.0
+* AMZN.BA > Pt-1: 4047.0 | Pt-1 - Pt2: -3.0
+* BABA.BA > Pt-1: 3937.5 | Pt-1 - Pt2: -2.0
+* GLNT.BA > Precio de cierre: 6156.5
+* MELI.BA > Pt-1: 4088.5 | Pt-1 - Pt2: 11.0
+* TSLA.BA > Pt-1: 6888.5 | Pt-1 - Pt2: -20.5
+* GOLD.BA > Precio de cierre: 3467.5
+* LMT.BA > Pt-1: 3195.5 | Pt-1 - Pt2: 5.5
+* MSFT.BA > Pt-1: 4361.5 | Pt-1 - Pt2: 21.0
+
+----------------- Diferencia con respecto al precio de compra ------------------
+* AGRO.BA > 6.4 == 0.31%
+* ADGO.BA > 745.0 == 0.26%
+* AMZN.BA > 688.0 == 0.2%
+* BABA.BA > -1076.0 == -0.21%
+* GLNT.BA > 506.5 == 0.09%
+* MELI.BA > 241.5 == 0.06%
+* TSLA.BA > -1401.5 == -0.17%
+* GOLD.BA > 265.5 == 0.08%
+* LMT.BA > -164.5 == -0.05%
+* MSFT.BA > 810.5 == 0.23%
+
+-------- El capital en renta viable a la fecha 2021-06-22 es de 76732.5 --------                             
 ```
 
 ```python
