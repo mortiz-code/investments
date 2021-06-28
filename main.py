@@ -1,4 +1,4 @@
-# usr/bin/env python
+# usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 __author__ = "Matias Ortiz"
@@ -8,13 +8,6 @@ __version__ = "0.1.0"
 __copyright__ = "Copyright (c) 2021, all rights reserved."
 __license__ = "BSD 3-Clause License."
 
-"""
- Doc: https://colab.research.google.com/drive/1qPNREasgE0vhVKttNL0YyMdZE84n28_H?usp=sharing
- import datetime
- now = datetime.datetime.now().strftime("%Y-%m-%d")
- import investpy
- investpy.get_stock_historical_data(stock='AGRO',country='argentina',from_date=end, to_date=now,interval='Daily')
-"""
 
 import yfinance as yf
 import pandas as pd
@@ -30,23 +23,6 @@ def read_excel():
     stocks_list = data_from_excel_stock.tolist()
     q_list = data_from_excel_q.tolist()
     pc_list = data_from_excel_pc.tolist()
-
-    # Listado de cedears tener el cuenta los nombres porque en BBVA no aparecen los standards de Yahoo Finance.
-    # result = [i + ".ba" for i in stocks_list]
-    # Por el momento uso lista manual porque falla excel.
-    stocks_list = [
-        "AGRO.BA",
-        "ADGO.BA",
-        "AMZN.BA",
-        "BABA.BA",
-        "GLNT.BA",
-        "MELI.BA",
-        "TSLA.BA",
-        "GOLD.BA",
-        "LMT.BA",
-        "MSFT.BA",
-    ]
-
     return stocks_list, q_list, pc_list
 
 
