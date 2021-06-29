@@ -1,2 +1,3 @@
 
-yfinance
+tabulate==0.8.9
+yfinance==0.1.59
