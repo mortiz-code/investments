@@ -15,6 +15,9 @@ from csv import reader
 from tabulate import tabulate
 from sys import argv
 from os.path import isfile
+import streamlit as st
+import pandas as pd
+from datetime import datetime
 
 
 def info(stocks_list):
@@ -43,13 +46,18 @@ def info(stocks_list):
         else:
             h.append(f"[+]")
     g = zip(d, e, f, h)
-    print(
-        tabulate(
-            list(g),
-            headers=["Stock", "Current", "Diff", "Variation"],
-            tablefmt="simple",
-        )
-    )
+    data = list(g)
+    return ws(data)
+
+
+def ws(data):
+    tab = pd.DataFrame(data=data, columns=["Ticket", "Current Price", "Diff", "Variation"])
+    now = datetime.now()  # current date and time
+    f = "%H:%M:%S, %m/%d/%Y"
+    now = now.strftime(f)
+    st.title("Stock prices.")
+    st.subheader(f"Data information: {now}")
+    st.table(tab)
 
 
 def read(file):
