@@ -1,7 +1,10 @@
-This app will use the file 'portfolio.csv'. In case it has another name, you can use it as an argument. Otherwise the application will not run.
+# investments
+
+This app for default will use the file 'portfolio.csv' as portfolio. In case it has another name, you can use it as an argument. Otherwise the application will not run.
+
+_Note: Current price has ~15' delay._
 
 ```python
-(venv) ┌──(mat㉿kali)-[~/github/devnet/stocks] (dev)
 └─$ python main.py
 Stock    Current    Diff      Variation
 -------  ---------  --------  -----------
@@ -20,7 +23,6 @@ X.BA     $ 1359.5   $ -11.5   [-]
 ```
 
 ```python
-(venv) ┌──(mat㉿kali)-[~/github/devnet/stocks] (dev)
 └─$ python main.py portfolio.csv
 Stock    Current    Diff      Variation
 -------  ---------  --------  -----------
@@ -39,7 +41,6 @@ X.BA     $ 1359.5   $ -11.5   [-]
 ```
 
 ```python
-(venv) ┌──(mat㉿kali)-[~/github/devnet/stocks] (dev)
 └─$ python main.py portfoliosdfs.csv
 File portfoliosdfs.csv not found.
 ```
