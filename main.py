@@ -12,7 +12,6 @@ __license__ = "BSD 3-Clause License."
 
 import yfinance as yf
 from csv import reader
-from tabulate import tabulate
 from sys import argv
 from os.path import isfile
 import streamlit as st
