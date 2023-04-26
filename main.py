@@ -16,7 +16,6 @@ from ratelimit import limits, sleep_and_retry
 
 urllib3.disable_warnings()
 
-# URL = "https://open.bymadata.com.ar/vanoms-be-core/rest/api/bymadata/free/market-time"
 HEADERS = {
     "Content-Type": "application/json",
     "Accept": "application/json",
@@ -30,12 +29,12 @@ def test_details(symbol):
 
 @sleep_and_retry
 @limits(calls=10, period=30)
-def details(symbol):
+def get_detail(symbol):
     DATA = {"symbol": symbol, "Content-Type": "application/json"}
     URL = "https://open.bymadata.com.ar/vanoms-be-core/rest/api/bymadata/free/bnown/fichatecnica/especies/general"
-    r = req.post(URL, timeout=10, json=DATA, headers=HEADERS, stream=False, verify=False)
-    # st.json(r.json()["data"][0])  # Json crudo
+    r = req.post(URL, timeout=10, json=DATA, headers=HEADERS, verify=False)
     st.code(f" {symbol} ".center(80, "-"))
+    # st.json(r.json()["data"][0])  # Json crudo
     if r.status_code == 200:
         df = pd.DataFrame(r.json()["data"])
         df = df.loc[
@@ -51,10 +50,30 @@ def details(symbol):
                 "fechaDevenganIntereses",
             ],
         ]
+        df = df.rename(
+            columns={
+                "emisor": "Emisor",
+                "denominacionMinima": "Lamina",
+                "formaAmortizacion": "Amortizacion",
+                "paisLey": "Ley",
+                "fechaDevenganIntereses": "Devenga interes",
+            }
+        )
+        # df = df.set_index(["Emisor"])
         df = df.iloc[0]
-        st.dataframe(df, use_container_width=True)
+        # st.dataframe(df, use_container_width=True)
+        return df
     else:
         st.error(f"Error: {r.status_code}")
+
+
+def highlight_variation(val):
+    if val > 0:
+        return "color: green"
+    elif val < 0:
+        return "color: red"
+    else:
+        return ""
 
 
 def on():
@@ -74,14 +93,39 @@ def on():
         df = df.loc[
             :, ["symbol", "denominationCcy", "daysToMaturity", "settlementPrice", "imbalance"]
         ]
-        # for i in range(5): # Test las primeros 5 ON
-        #     details(df.symbol.iloc[i])
-        st.dataframe(df, use_container_width=True)
-        with st.spinner("In progress..."):
-            for i in df.symbol:
-                details(i)
+        df = df.rename(
+            columns={
+                "symbol": "Ticket",
+                "denominationCcy": "Moneda",
+                "daysToMaturity": "Vencimiento",
+                "settlementPrice": "Ultimo operado",
+                "imbalance": "Variacion",
+            }
+        )
+        pd.options.display.float_format = "{:,0f}".format
+        df = df.set_index(["Ticket"])
+        agree = st.checkbox("Mayores a 2 años.")
+        df["Variacion"] = df["Variacion"] * 100
+        if agree:
+            df = df.query("Vencimiento >= 365*2")
+            df["Vencimiento"] = df["Vencimiento"] / 365
+        dfstyle = df.style.applymap(highlight_variation, subset=["Variacion"])
+        st.dataframe(dfstyle, use_container_width=True)
+        agree = st.checkbox("Ver detalles")
+        if agree:
+            for i in df.index:
+                create_details(i)
     else:
         st.error(f"Error: {r.status_code}")
+
+
+def create_details(ticket):
+    dfs = []
+    with st.spinner("In progress..."):
+        dfs.append(get_detail(ticket))
+    st.code(len(dfs))
+    df = pd.concat(dfs, ignore_index=True)
+    st.dataframe(df, use_container_width=True)
 
 
 def main():
