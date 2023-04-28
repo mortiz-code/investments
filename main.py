@@ -58,7 +58,8 @@ def get_detail(symbol):
             )
             df = df.set_index(["Emisor"])
             df = df.iloc[0]
-            df["Devenga interes"] = pd.to_datetime(df["Devenga interes"]).date()
+            df["De  venga interes"] = pd.to_datetime(df["Devenga interes"]).date()
+            df = df.dropna()
             return df
         except KeyError:
             st.warning(f"La ON no cuenta con informacion disponible.")
@@ -101,7 +102,7 @@ def on():
                 "imbalance": "Variacion",
             }
         )
-        pd.options.display.float_format = "{:,0f}".format
+        pd.options.display.float_format = "{:,2f}".format
         df = df.set_index(["Ticket"])
         df["Variacion"] = df["Variacion"] * 100
         agree = st.checkbox("Mayores a 2 años.")
@@ -110,9 +111,10 @@ def on():
             # df["Vencimiento"] = df["Vencimiento"] / 365
         dfstyle = df.style.applymap(highlight_variation, subset=["Variacion"])
         st.dataframe(dfstyle, use_container_width=True)
-        # st.markdown("""---""")
+        st.markdown("---")
         agree = st.checkbox("Más info:")
-        deepsearch(df, agree)
+        if agree:
+            deepsearch(df, agree)
     else:
         st.error(f"Error: {r.status_code}")
 
