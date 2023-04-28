@@ -1,6 +1,6 @@
 # investments
 
-This app for default will use the file 'portfolio.csv' as portfolio. In case it has another name, you can use it as an argument. Otherwise the application will not run.
+This app get all ONs from byma .
 
 _Note: Current price has ~15' delay._
 

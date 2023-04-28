@@ -1,8 +1,8 @@
 # usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-__author__ = "Matias Ortiz"
-__email__ = "matias.ortiz@bvstv.com"
+__author__ = "mcode"
+__email__ = "matcode@pm.me"
 __webpage__ = "https://github.com/mortiz-code"
 __version__ = "1.1.0"
 __copyright__ = "Copyright (c) 2021, all rights reserved."
