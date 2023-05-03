@@ -12,6 +12,8 @@ import requests as req
 import pandas as pd
 import streamlit as st
 import urllib3
+from csv import reader
+from os.path import isfile
 
 urllib3.disable_warnings()
 
@@ -20,10 +22,6 @@ HEADERS = {
     "Accept": "application/json",
     "Referer-Policy": "no-referrer-when-downgrade",
 }
-
-
-def test_details(symbol):
-    st.code(f" {symbol} ".center(80, "-"))
 
 
 def get_detail(symbol):
@@ -53,18 +51,19 @@ def get_detail(symbol):
                     "denominacionMinima": "Lamina",
                     "formaAmortizacion": "Amortizacion",
                     "paisLey": "Ley",
+                    "moneda": "Moneda",
                     "fechaDevenganIntereses": "Devenga interes",
                 }
             )
             df = df.set_index(["Emisor"])
             df = df.iloc[0]
-            df["De  venga interes"] = pd.to_datetime(df["Devenga interes"]).date()
+            df["Devenga interes"] = pd.to_datetime(df["Devenga interes"]).date()
             df = df.dropna()
             return df
         except KeyError:
-            st.warning(f"La ON no cuenta con informacion disponible.")
+            st.warning("La ON no cuenta con informacion disponible.")
     else:
-        st.error(f"Error: {r.status_code}")
+        st.warning(f"Especie no encontrada {symbol}.\nLlamar al banco y/o buscar código ISIN.")
 
 
 def highlight_variation(val):
@@ -76,20 +75,10 @@ def highlight_variation(val):
         return ""
 
 
-def on():
-    DATA = {
-        "excludeZeroPFAndQty": True,
-        "T2": True,
-        "T1": False,
-        "T0": False,
-        "Content-Type": "application/json",
-    }
-    URL = (
-        "https://open.bymadata.com.ar/vanoms-be-core/rest/api/bymadata/free/negociable-obligations"
-    )
-    r = req.post(URL, timeout=10, json=DATA, headers=HEADERS, stream=False, verify=False)
-    if r.status_code == 200:
-        df = pd.DataFrame(r.json())
+def format_data():
+    response = get_data()
+    if response.status_code == 200:
+        df = pd.DataFrame(response.json())
         df = df.loc[
             :, ["symbol", "denominationCcy", "daysToMaturity", "settlementPrice", "imbalance"]
         ]
@@ -102,21 +91,79 @@ def on():
                 "imbalance": "Variacion",
             }
         )
-        pd.options.display.float_format = "{:,2f}".format
+        pd.options.display.float_format = "{:.2f}".format
         df = df.set_index(["Ticket"])
         df["Variacion"] = df["Variacion"] * 100
-        agree = st.checkbox("Mayores a 2 años.")
-        if agree:
-            df = df.query("Vencimiento >= 365")
-            # df["Vencimiento"] = df["Vencimiento"] / 365
+        (
+            col1,
+            col2,
+            col3,
+            col4,
+            col5,
+        ) = st.columns(5)
+        df = options(df, col1, col2, col3, col4, col5)
         dfstyle = df.style.applymap(highlight_variation, subset=["Variacion"])
         st.dataframe(dfstyle, use_container_width=True)
+        st.code(f'Cantidad de oblicaciones negociables disponibles: {df["Variacion"].count()}')
         st.markdown("---")
+        (
+            col1,
+            col2,
+        ) = st.columns(2)
+        more_options(df, col1, col2)
+    else:
+        st.error(f"Error: {response.status_code}")
+
+
+def more_options(df, col1, col2):
+    with col2:
         agree = st.checkbox("Más info:")
         if agree:
             deepsearch(df, agree)
-    else:
-        st.error(f"Error: {r.status_code}")
+    with col1:
+        agree = st.checkbox("Cartera.")
+        if agree:
+            cartera()
+
+
+def get_data():
+    DATA = {
+        "excludeZeroPFAndQty": True,
+        "T2": True,
+        "T1": False,
+        "T0": False,
+        "Content-Type": "application/json",
+    }
+    URL = (
+        "https://open.bymadata.com.ar/vanoms-be-core/rest/api/bymadata/free/negociable-obligations"
+    )
+    response = req.post(URL, timeout=10, json=DATA, headers=HEADERS, stream=False, verify=False)
+    return response
+
+
+def options(df, col1, col2, col3, col4, col5):
+    with col4:
+        agree = st.checkbox("Mediano plazo")
+        if agree:
+            df = df.query("Vencimiento >= 600")
+    with col5:
+        agree = st.checkbox("Largo plazo")
+        if agree:
+            df = df.query("Vencimiento >= 1500")
+    with col1:
+        agree = st.checkbox("Ocultar inactivas.")
+        if agree:
+            df = df[df["Ultimo operado"] != 0]
+    with col2:
+        agree = st.checkbox("Pesos")
+        if agree:
+            df = df[df["Moneda"] == "ARS"]
+    with col3:
+        agree = st.checkbox("Dolares")
+        if agree:
+            df = df[df["Moneda"] == "USD"]
+
+    return df
 
 
 def deepsearch(df, agree):
@@ -130,8 +177,25 @@ def deepsearch(df, agree):
             st.dataframe(df, use_container_width=True)
 
 
+def cartera():
+    file = "on.csv"
+    if isfile(file):
+        try:
+            with open("on.csv", "r", encoding="utf-8") as file:
+                data = reader(file)
+                for i in data:
+                    ticket = st.selectbox("ON en posesión:", i)
+                    with st.spinner("In progress..."):
+                        df = get_detail(ticket)
+                        st.dataframe(df, use_container_width=True)
+        except FileNotFoundError:
+            st.error(f"File {file} not found.")
+    else:
+        st.error("CSV file not found.")
+
+
 def main():
-    on()
+    format_data()
 
 
 if __name__ == "__main__":
