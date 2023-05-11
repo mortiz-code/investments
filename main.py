@@ -81,7 +81,7 @@ def highlight_variation(val):
         return ""
 
 
-def format_data():
+def byma():
     response = get_data()
     if response.status_code == 200:
         df = pd.DataFrame(response.json())
@@ -191,6 +191,43 @@ def cartera():
         st.error("CSV file not found.")
 
 
+def mae():
+    col1, col2 = st.columns(2)
+    with col1:
+        periodo = "A" if st.button("Licitaciones Activas.") else None
+    with col2:
+        periodo = "P" if st.button("Licitaciones Futuras.") else None
+    with st.spinner("Procesando.."):
+        if periodo is not None:
+            licitacion(periodo)
+        else:
+            licitacion()
+    st.markdown("---")
+
+
+def highlight_colocador(val):
+    if "SANTANDER" in val:
+        return "color: orange"
+    elif "BBVA" in val:
+        return "color: blue"
+    else:
+        return ""
+
+
+def licitacion(periodo="A"):
+    url = f"https://www.mae.com.ar/mercado-primario/licitaciones/LicitacionesbyEstado/{periodo}"
+    r = req.get(url, timeout=10, headers=HEADERS)
+    df = pd.DataFrame(r.json()["data"])
+    df = df.loc[
+        :, ["Emisor", "FechaInicio", "Moneda", "Observaciones", "Descripcion", "Colocador"]
+    ]  # FechaInicio/FechaVencimiento/FechaLiquidacion/Titulo/Emisor/Industria/Descripcion/Moneda/AmpliableHasta/MontoaLicitar/Rueda/Modalidad/Liquidador/Estado/Tipo/Colocador/Observaciones/Resultados/InformacionAdicional/Monto_Adjudicado/Sistema_Adjudicacion/Valor_Corte/Duration/ID/ExisteArchivo/Comentario
+    df = df.rename(columns={"FechaInicio": "Fecha"})
+    df = df[df["Colocador"].str.contains("SANTANDER|BBVA", case=False, na=False)]
+    # df = df.set_index(["Emisor"]).reset_index()
+    dfstyle = df.style.applymap(highlight_colocador, subset=["Colocador"])
+    st.dataframe(dfstyle, use_container_width=True)
+
+
 def main():
     st.set_page_config(
         page_title="BYMA App",
@@ -198,7 +235,11 @@ def main():
         layout="wide",
         initial_sidebar_state="expanded",
     )
-    format_data()
+    tab1, tab2 = st.tabs(["📈 Mercado Abierto Electronico", "🗃 Bolsas y Mercados Argentinos"])
+    with tab1:
+        mae()
+    with tab2:
+        byma()
 
 
 if __name__ == "__main__":
