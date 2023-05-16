@@ -216,24 +216,30 @@ def highlight_colocador(val):
 
 def licitacion(periodo="A"):
     url = f"https://www.mae.com.ar/mercado-primario/licitaciones/LicitacionesbyEstado/{periodo}"
-    r = req.get(url, timeout=10, headers=HEADERS)
-    df = pd.DataFrame(r.json()["data"])
-    df = df.loc[
-        :, ["Emisor", "FechaInicio", "Moneda", "Observaciones", "Descripcion", "Colocador"]
-    ]  # FechaInicio/FechaVencimiento/FechaLiquidacion/Titulo/Emisor/Industria/Descripcion/Moneda/AmpliableHasta/MontoaLicitar/Rueda/Modalidad/Liquidador/Estado/Tipo/Colocador/Observaciones/Resultados/InformacionAdicional/Monto_Adjudicado/Sistema_Adjudicacion/Valor_Corte/Duration/ID/ExisteArchivo/Comentario
-    df = df.rename(columns={"FechaInicio": "Fecha"})
-    df = df[df["Colocador"].str.contains("SANTANDER|BBVA", case=False, na=False)]
-    # df = df.set_index(["Emisor"]).reset_index()
-    dfstyle = df.style.applymap(highlight_colocador, subset=["Colocador"])
-    st.dataframe(dfstyle, use_container_width=True)
-    st.markdown(
-        f"\n* Para más información [MAE]('https://www.mae.com.ar/mercado-primario/licitaciones#/{periodo}')"
-    )
+    try:
+        r = req.get(url, timeout=10, headers=HEADERS)
+        df = pd.DataFrame(r.json()["data"])
+        df = df.loc[
+            :, ["Emisor", "FechaInicio", "Moneda", "Observaciones", "Descripcion", "Colocador"]
+        ]  # FechaInicio/FechaVencimiento/FechaLiquidacion/Titulo/Emisor/Industria/Descripcion/Moneda/AmpliableHasta/MontoaLicitar/Rueda/Modalidad/Liquidador/Estado/Tipo/Colocador/Observaciones/Resultados/InformacionAdicional/Monto_Adjudicado/Sistema_Adjudicacion/Valor_Corte/Duration/ID/ExisteArchivo/Comentario
+        df = df.rename(columns={"FechaInicio": "Fecha"})
+        df = df[df["Colocador"].str.contains("SANTANDER|BBVA", case=False, na=False)]
+        # df = df.set_index(["Emisor"]).reset_index()
+        dfstyle = df.style.applymap(highlight_colocador, subset=["Colocador"])
+        st.dataframe(dfstyle, use_container_width=True)
+        st.markdown(
+            f"\n* Para más información [MAE]('https://www.mae.com.ar/mercado-primario/licitaciones#/{periodo}')"
+        )
+
+    except KeyError:
+        st.warning(
+            "No hay licitaciones activas en este momento.\n\nRevisar las futuras licitaciones."
+        )
 
 
 def main():
     st.set_page_config(
-        page_title="BYMA App",
+        page_title="Inversiones App",
         page_icon="🧊",
         layout="wide",
         initial_sidebar_state="expanded",
