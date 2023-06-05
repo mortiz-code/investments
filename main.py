@@ -228,9 +228,8 @@ def licitacion(periodo="A"):
         dfstyle = df.style.applymap(highlight_colocador, subset=["Colocador"])
         st.dataframe(dfstyle, use_container_width=True)
         st.markdown(
-            f"\n* Para más información [MAE]('https://www.mae.com.ar/mercado-primario/licitaciones#/{periodo}')"
+            f"\n* Para más información [MAE](https://www.mae.com.ar/mercado-primario/licitaciones#/{periodo})"
         )
-
     except KeyError:
         st.warning(
             "No hay licitaciones activas en este momento.\n\nRevisar las futuras licitaciones."
