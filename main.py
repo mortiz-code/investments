@@ -106,8 +106,9 @@ def byma():
             col3,
             col4,
             col5,
-        ) = st.columns(5)
-        df = options(df, col1, col2, col3, col4, col5)
+            col6,
+        ) = st.columns(6)
+        df = options(df, col1, col2, col3, col4, col5, col6)
         dfstyle = df.style.applymap(highlight_variation, subset=["Variacion"])
         st.dataframe(dfstyle, use_container_width=True)
         st.code(f'Cantidad de oblicaciones negociables disponibles: {df["Variacion"].count()}')
@@ -144,9 +145,9 @@ def get_data():
     return req.post(URL, timeout=10, json=DATA, headers=HEADERS, stream=False, verify=False)
 
 
-def options(df, col1, col2, col3, col4, col5):
+def options(df, col1, col2, col3, col4, col5, col6):
     with col1:
-        if agree := st.checkbox("Ocultar inactivas."):
+        if agree := st.checkbox("Activas"):
             df = df[df["Ultimo operado"] != 0]
     with col2:
         if agree := st.checkbox("Pesos"):
@@ -155,10 +156,16 @@ def options(df, col1, col2, col3, col4, col5):
         if agree := st.checkbox("Dolares"):
             df = df[df["Moneda"] == "USD"]
     with col4:
+        if agree := st.checkbox("Precio"):
+            if price := st.number_input(
+                "Precio", value=35000, step=100, label_visibility="collapsed"
+            ):
+                df = df[df["Ultimo operado"] > price]
+    with col5:
         if agree := st.checkbox("Mediano plazo"):
             df = df.query("Vencimiento >= 600")
             df["Vencimiento años"] = (df["Vencimiento"] / 365).round(2)
-    with col5:
+    with col6:
         if agree := st.checkbox("Largo plazo"):
             df = df.query("Vencimiento >= 1500")
             df["Vencimiento años"] = (df["Vencimiento"] / 365).round(2)
