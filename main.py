@@ -14,8 +14,15 @@ import streamlit as st
 import urllib3
 from csv import reader
 from os.path import isfile
+from dotenv import load_dotenv
+from os import getenv
+from datetime import date, datetime
 
 urllib3.disable_warnings()
+
+load_dotenv()
+
+TOKEN = getenv("TOKEN")
 
 HEADERS = {
     "Content-Type": "application/json",
@@ -145,30 +152,42 @@ def get_data():
     return req.post(URL, timeout=10, json=DATA, headers=HEADERS, stream=False, verify=False)
 
 
+def bcra_usd():
+    HEADER = {"Authorization": f"BEARER {TOKEN}"}
+    URL = "https://api.estadisticasbcra.com/usd"
+    r = req.get(URL, timeout=3, headers=HEADER)
+    return r.json()[-1]["v"]
+
+
 def options(df, col1, col2, col3, col4, col5, col6):
-    with col1:
-        if agree := st.checkbox("Activas"):
-            df = df[df["Ultimo operado"] != 0]
-    with col2:
-        if agree := st.checkbox("Pesos"):
-            df = df[df["Moneda"] == "ARS"]
-    with col3:
-        if agree := st.checkbox("Dolares"):
-            df = df[df["Moneda"] == "USD"]
-    with col4:
-        if agree := st.checkbox("Precio"):
-            if price := st.number_input(
-                "Precio", value=35000, step=100, label_visibility="collapsed"
-            ):
-                df = df[df["Ultimo operado"] > price]
-    with col5:
-        if agree := st.checkbox("Mediano plazo"):
-            df = df.query("Vencimiento >= 600")
-            df["Vencimiento años"] = (df["Vencimiento"] / 365).round(2)
-    with col6:
-        if agree := st.checkbox("Largo plazo"):
-            df = df.query("Vencimiento >= 1500")
-            df["Vencimiento años"] = (df["Vencimiento"] / 365).round(2)
+    with st.expander("Opciones"):
+        with col1:
+            if agree := st.checkbox("Activas"):
+                df = df[df["Ultimo operado"] != 0]
+        with col2:
+            if agree := st.checkbox("En pesos"):
+                df = df[df["Moneda"] == "ARS"]
+                with col3:
+                    if agree := st.checkbox("Precio de referencia"):
+                        usd_price = bcra_usd()
+                        if price := st.number_input(
+                            "Precio",
+                            value=usd_price * 100,
+                            step=100,
+                            label_visibility="collapsed",
+                        ):
+                            df = df[df["Ultimo operado"] > price]
+        with col4:
+            if agree := st.checkbox("En dolares"):
+                df = df[df["Moneda"] == "USD"]
+        with col5:
+            if agree := st.checkbox("Mediano plazo"):
+                df = df.query("Vencimiento >= 600")
+                df["Vencimiento años"] = (df["Vencimiento"] / 365).round(2)
+        with col6:
+            if agree := st.checkbox("Largo plazo"):
+                df = df.query("Vencimiento >= 1500")
+                df["Vencimiento años"] = (df["Vencimiento"] / 365).round(2)
     return df
 
 
@@ -214,7 +233,7 @@ def mae():
 
 def highlight_colocador(val):
     if "SANTANDER" in val:
-        return "color: orange"
+        return "color: red"
     elif "BBVA" in val:
         return "color: blue"
     else:
@@ -250,11 +269,23 @@ def main():
         layout="wide",
         initial_sidebar_state="expanded",
     )
+    clean_html()
     tab1, tab2 = st.tabs(["📈 Mercado Abierto Electronico", "🗃 Bolsas y Mercados Argentinos"])
     with tab1:
         mae()
     with tab2:
         byma()
+
+
+def clean_html():
+    hide_st_style = """
+                <style>
+                #MainMenu {visibility: hidden;}
+                footer {visibility: hidden;}
+                header {visibility: hidden;}
+                </style>
+                """
+    st.markdown(hide_st_style, unsafe_allow_html=True)
 
 
 if __name__ == "__main__":
