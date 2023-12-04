@@ -116,7 +116,7 @@ def byma():
             col6,
         ) = st.columns(6)
         df = options(df, col1, col2, col3, col4, col5, col6)
-        dfstyle = df.style.applymap(highlight_variation, subset=["Variacion"])
+        dfstyle = df.style.map(highlight_variation, subset=["Variacion"])
         st.dataframe(dfstyle, use_container_width=True)
         st.code(f'Cantidad de oblicaciones negociables disponibles: {df["Variacion"].count()}')
         st.markdown("---")
@@ -251,7 +251,7 @@ def licitacion(periodo="A"):
         df = df.rename(columns={"FechaInicio": "Fecha"})
         df = df[df["Colocador"].str.contains("SANTANDER|BBVA", case=False, na=False)]
         # df = df.set_index(["Emisor"]).reset_index()
-        dfstyle = df.style.applymap(highlight_colocador, subset=["Colocador"])
+        dfstyle = df.style.map(highlight_colocador, subset=["Colocador"])
         st.dataframe(dfstyle, use_container_width=True)
         st.markdown(
             f"\n* Para más información [MAE](https://www.mae.com.ar/mercado-primario/licitaciones#/{periodo})"
