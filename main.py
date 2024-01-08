@@ -8,15 +8,16 @@ __version__ = "1.1.0"
 __copyright__ = "Copyright (c) 2021, all rights reserved."
 __license__ = "BSD 3-Clause License."
 
+
+from csv import reader
+from os.path import isfile
+from os import getenv
+from dotenv import load_dotenv
+from streamlit_extras.customize_running import center_running
 import requests as req
 import pandas as pd
 import streamlit as st
 import urllib3
-from csv import reader
-from os.path import isfile
-from dotenv import load_dotenv
-from os import getenv
-from datetime import date, datetime
 
 urllib3.disable_warnings()
 
@@ -31,6 +32,7 @@ HEADERS = {
 }
 
 
+@st.cache_data(experimental_allow_widgets=True)
 def get_detail(symbol):
     DATA = {"symbol": symbol, "Content-Type": "application/json"}
     URL = "https://open.bymadata.com.ar/vanoms-be-core/rest/api/bymadata/free/bnown/fichatecnica/especies/general"
@@ -41,7 +43,9 @@ def get_detail(symbol):
         except KeyError:
             st.warning("La ON no cuenta con informacion disponible.")
     else:
-        st.warning(f"Especie no encontrada {symbol}.\nLlamar al banco y/o buscar código ISIN.")
+        st.warning(
+            f"Especie no encontrada {symbol}.\nLlamar al banco y/o buscar código ISIN."
+        )
 
 
 def format_response(r):
@@ -88,12 +92,20 @@ def highlight_variation(val):
         return ""
 
 
+@st.cache_data(experimental_allow_widgets=True)
 def byma():
     response = get_data()
     if response.status_code == 200:
         df = pd.DataFrame(response.json())
         df = df.loc[
-            :, ["symbol", "denominationCcy", "daysToMaturity", "settlementPrice", "imbalance"]
+            :,
+            [
+                "symbol",
+                "denominationCcy",
+                "daysToMaturity",
+                "settlementPrice",
+                "imbalance",
+            ],
         ]
         df = df.rename(
             columns={
@@ -118,7 +130,9 @@ def byma():
         df = options(df, col1, col2, col3, col4, col5, col6)
         dfstyle = df.style.map(highlight_variation, subset=["Variacion"])
         st.dataframe(dfstyle, use_container_width=True)
-        st.code(f'Cantidad de oblicaciones negociables disponibles: {df["Variacion"].count()}')
+        st.code(
+            f'Cantidad de oblicaciones negociables disponibles: {df["Variacion"].count()}'
+        )
         st.markdown("---")
         (
             col1,
@@ -146,10 +160,10 @@ def get_data():
         "T0": False,
         "Content-Type": "application/json",
     }
-    URL = (
-        "https://open.bymadata.com.ar/vanoms-be-core/rest/api/bymadata/free/negociable-obligations"
+    URL = "https://open.bymadata.com.ar/vanoms-be-core/rest/api/bymadata/free/negociable-obligations"
+    return req.post(
+        URL, timeout=10, json=DATA, headers=HEADERS, stream=False, verify=False
     )
-    return req.post(URL, timeout=10, json=DATA, headers=HEADERS, stream=False, verify=False)
 
 
 def bcra_usd():
@@ -163,10 +177,10 @@ def options(df, col1, col2, col3, col4, col5, col6):
     with st.expander("Opciones"):
         with col1:
             if agree := st.checkbox("Activas"):
-                df = df[df["Ultimo operado"] != 0]
+                df = df.loc[df["Ultimo operado"] != 0]  # Usando .loc
         with col2:
             if agree := st.checkbox("En pesos"):
-                df = df[df["Moneda"] == "ARS"]
+                df = df.loc[df["Moneda"] == "ARS"]  # Usando .loc
                 with col3:
                     if agree := st.checkbox("Precio de referencia"):
                         usd_price = bcra_usd()
@@ -176,18 +190,22 @@ def options(df, col1, col2, col3, col4, col5, col6):
                             step=100,
                             label_visibility="collapsed",
                         ):
-                            df = df[df["Ultimo operado"] > price]
+                            df = df.loc[df["Ultimo operado"] > price]  # Usando .loc
         with col4:
             if agree := st.checkbox("En dolares"):
-                df = df[df["Moneda"] == "USD"]
+                df = df.loc[df["Moneda"] == "USD"]  # Usando .loc
         with col5:
             if agree := st.checkbox("Mediano plazo"):
                 df = df.query("Vencimiento >= 600")
-                df["Vencimiento años"] = (df["Vencimiento"] / 365).round(2)
+                df.loc[:, "Vencimiento años"] = (df["Vencimiento"] / 365).round(
+                    2
+                )  # Usando .loc
         with col6:
             if agree := st.checkbox("Largo plazo"):
                 df = df.query("Vencimiento >= 1500")
-                df["Vencimiento años"] = (df["Vencimiento"] / 365).round(2)
+                df.loc[:, "Vencimiento años"] = (df["Vencimiento"] / 365).round(
+                    2
+                )  # Usando .loc
     return df
 
 
@@ -246,7 +264,15 @@ def licitacion(periodo="A"):
         r = req.get(url, timeout=10, headers=HEADERS)
         df = pd.DataFrame(r.json()["data"])
         df = df.loc[
-            :, ["Emisor", "FechaInicio", "Moneda", "Observaciones", "Descripcion", "Colocador"]
+            :,
+            [
+                "Emisor",
+                "FechaInicio",
+                "Moneda",
+                "Observaciones",
+                "Descripcion",
+                "Colocador",
+            ],
         ]  # FechaInicio/FechaVencimiento/FechaLiquidacion/Titulo/Emisor/Industria/Descripcion/Moneda/AmpliableHasta/MontoaLicitar/Rueda/Modalidad/Liquidador/Estado/Tipo/Colocador/Observaciones/Resultados/InformacionAdicional/Monto_Adjudicado/Sistema_Adjudicacion/Valor_Corte/Duration/ID/ExisteArchivo/Comentario
         df = df.rename(columns={"FechaInicio": "Fecha"})
         df = df[df["Colocador"].str.contains("SANTANDER|BBVA", case=False, na=False)]
@@ -269,8 +295,10 @@ def main():
         layout="wide",
         initial_sidebar_state="expanded",
     )
+    center_running()
     clean_html()
-    tab1, tab2 = st.tabs(["📈 Mercado Abierto Electronico", "🗃 Bolsas y Mercados Argentinos"])
+    # fmt: off
+    tab1, tab2 = st.tabs(["📈 Mercado Abierto Electronico" ,"🗃 Bolsas y Mercados Argentinos"])
     with tab1:
         mae()
     with tab2:
