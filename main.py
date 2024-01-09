@@ -263,18 +263,26 @@ def cartera():
 
 
 def mae():
-    col1, col2 = st.columns(2)
-    with col1:
-        periodo = "A" if st.button("Licitaciones Activas.") else None
-    with col2:
-        periodo = "P" if st.button("Licitaciones Futuras.") else None
-    with st.spinner("Procesando.."):
-        with st.container(border=True):
-            if periodo is not None:
-                licitacion(periodo)
-            else:
-                licitacion()
-    st.divider()
+    option = sac.buttons(
+        [
+            sac.ButtonsItem(label="Licitaciones Activas.", color="#6499cb"),
+            sac.ButtonsItem(label="Licitaciones Futuras.", color="#c1a5e4"),
+            sac.ButtonsItem(
+                label="Listado Completo",
+                icon="share-fill",
+                href="https://www.mae.com.ar/mercado-primario/licitaciones#/P",
+            ),
+        ],
+        align="center",
+        radius="xl",
+        gap="md",
+        return_index=True,
+    )
+    with st.container(border=True):
+        if option == 0:
+            licitacion(periodo="A")
+        elif option == 1:
+            licitacion(periodo="P")
 
 
 def highlight_colocador(val):
@@ -288,43 +296,46 @@ def highlight_colocador(val):
         return ""
 
 
-def licitacion(periodo="A"):
-    url = f"https://www.mae.com.ar/mercado-primario/licitaciones/LicitacionesbyEstado/{periodo}"
-    try:
-        r = req.get(url, timeout=10, headers=HEADERS)
-        df = pd.DataFrame(r.json()["data"])
-        df = df.loc[
-            :,
-            [
-                "Emisor",
-                "FechaInicio",
-                "Moneda",
-                "Observaciones",
-                "Descripcion",
-                "Colocador",
-            ],
-        ]  # FechaInicio/FechaVencimiento/FechaLiquidacion/Titulo/Emisor/Industria/Descripcion/Moneda/AmpliableHasta/MontoaLicitar/Rueda/Modalidad/Liquidador/Estado/Tipo/Colocador/Observaciones/Resultados/InformacionAdicional/Monto_Adjudicado/Sistema_Adjudicacion/Valor_Corte/Duration/ID/ExisteArchivo/Comentario
-        df = df.rename(columns={"FechaInicio": "Fecha"})
-        df = df[
-            df["Colocador"].str.contains("SANTANDER|BBVA|Cocos", case=False, na=False)
-        ]
-        # df = df.set_index(["Emisor"]).reset_index()
-        dfstyle = df.style.map(highlight_colocador, subset=["Colocador"])
-        if not df.empty:  # Check if DataFrame is not empty
-            st.dataframe(
-                dfstyle, use_container_width=True
-            )  # Display DataFrame if it has data
-            st.markdown(
-                f"\n* Para más información [MAE](https://www.mae.com.ar/mercado-primario/licitaciones#/{periodo})"
-            )
-        else:
+def licitacion(periodo):
+    with st.spinner("Procesando.."):
+        url = f"https://www.mae.com.ar/mercado-primario/licitaciones/LicitacionesbyEstado/{periodo}"
+        try:
+            r = req.get(url, timeout=10, headers=HEADERS)
+            df = pd.DataFrame(r.json()["data"])
+            df = df.loc[
+                :,
+                [
+                    "Emisor",
+                    "FechaInicio",
+                    "Moneda",
+                    "Observaciones",
+                    "Descripcion",
+                    "Colocador",
+                ],
+            ]  # FechaInicio/FechaVencimiento/FechaLiquidacion/Titulo/Emisor/Industria/Descripcion/Moneda/AmpliableHasta/MontoaLicitar/Rueda/Modalidad/Liquidador/Estado/Tipo/Colocador/Observaciones/Resultados/InformacionAdicional/Monto_Adjudicado/Sistema_Adjudicacion/Valor_Corte/Duration/ID/ExisteArchivo/Comentario
+            df = df.rename(columns={"FechaInicio": "Fecha"})
+            df = df[
+                df["Colocador"].str.contains(
+                    "SANTANDER|BBVA|Cocos", case=False, na=False
+                )
+            ]
+            # df = df.set_index(["Emisor"]).reset_index()
+            dfstyle = df.style.map(highlight_colocador, subset=["Colocador"])
+            if not df.empty:  # Check if DataFrame is not empty
+                st.dataframe(
+                    dfstyle, use_container_width=True
+                )  # Display DataFrame if it has data
+                st.markdown(
+                    f"\n* Para más información [MAE](https://www.mae.com.ar/mercado-primario/licitaciones#/{periodo})"
+                )
+            else:
+                st.warning(
+                    "*_No hay licitaciones disponibles en Santander, BBVA ni Cocos Capital._*"
+                )
+        except KeyError:
             st.warning(
-                "*_No hay licitaciones disponibles en Santander, BBVA ni Cocos Capital._*"
+                "No hay licitaciones activas en este momento.\n\nRevisar las futuras licitaciones."
             )
-    except KeyError:
-        st.warning(
-            "No hay licitaciones activas en este momento.\n\nRevisar las futuras licitaciones."
-        )
 
 
 def main():
