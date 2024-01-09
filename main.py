@@ -14,6 +14,7 @@ from os.path import isfile
 from os import getenv
 from dotenv import load_dotenv
 from streamlit_extras.customize_running import center_running
+from streamlit_extras.colored_header import colored_header
 import requests as req
 import pandas as pd
 import streamlit as st
@@ -92,7 +93,7 @@ def highlight_variation(val):
         return ""
 
 
-@st.cache_data(experimental_allow_widgets=True)
+@st.cache_data(show_spinner=True, experimental_allow_widgets=True)
 def byma():
     response = get_data()
     if response.status_code == 200:
@@ -109,7 +110,7 @@ def byma():
         ]
         df = df.rename(
             columns={
-                "symbol": "Ticket",
+                "symbol": "Activo",
                 "denominationCcy": "Moneda",
                 "daysToMaturity": "Vencimiento",
                 "settlementPrice": "Ultimo operado",
@@ -117,7 +118,7 @@ def byma():
             }
         )
         pd.options.display.float_format = "{:.2f}".format
-        df = df.set_index(["Ticket"])
+        df = df.set_index(["Activo"])
         df["Variacion"] = df["Variacion"] * 100
         (
             col1,
@@ -129,11 +130,12 @@ def byma():
         ) = st.columns(6)
         df = options(df, col1, col2, col3, col4, col5, col6)
         dfstyle = df.style.map(highlight_variation, subset=["Variacion"])
-        st.dataframe(dfstyle, use_container_width=True)
+        with st.container(border=True):
+            st.dataframe(dfstyle, use_container_width=True)
         st.code(
             f'Cantidad de oblicaciones negociables disponibles: {df["Variacion"].count()}'
         )
-        st.markdown("---")
+        st.divider()
         (
             col1,
             col2,
@@ -144,12 +146,19 @@ def byma():
 
 
 def more_options(df, col1, col2):
-    with col2:
-        if agree := st.checkbox("Más info:"):
-            deepsearch(df, agree)
     with col1:
-        if agree := st.checkbox("Cartera."):
-            cartera()
+        with st.container(border=True):
+            if agree := st.checkbox("Más info:"):
+                colored_header(
+                    label="Detalles de ON",
+                    description="_Informacion de amortizacion, interes, lamina, vencimiento, moneda..._",
+                    color_name="violet-70",
+                )
+                deepsearch(df, agree)
+    with col2:
+        with st.container(border=True):
+            if agree := st.checkbox("Cartera."):
+                cartera()
 
 
 def get_data():
@@ -176,10 +185,11 @@ def bcra_usd():
 def options(df, col1, col2, col3, col4, col5, col6):
     with st.expander("Opciones"):
         with col1:
-            if agree := st.checkbox("Activas"):
+            if agree := st.toggle("Activas"):
+                # if agree := st.checkbox("Activas"):
                 df = df.loc[df["Ultimo operado"] != 0]  # Usando .loc
         with col2:
-            if agree := st.checkbox("En pesos"):
+            if agree := st.toggle("En pesos"):
                 df = df.loc[df["Moneda"] == "ARS"]  # Usando .loc
                 with col3:
                     if agree := st.checkbox("Precio de referencia"):
@@ -192,16 +202,16 @@ def options(df, col1, col2, col3, col4, col5, col6):
                         ):
                             df = df.loc[df["Ultimo operado"] > price]  # Usando .loc
         with col4:
-            if agree := st.checkbox("En dolares"):
+            if agree := st.toggle("En dolares"):
                 df = df.loc[df["Moneda"] == "USD"]  # Usando .loc
         with col5:
-            if agree := st.checkbox("Mediano plazo"):
+            if agree := st.toggle("Mediano plazo"):
                 df = df.query("Vencimiento >= 600")
                 df.loc[:, "Vencimiento años"] = (df["Vencimiento"] / 365).round(
                     2
                 )  # Usando .loc
         with col6:
-            if agree := st.checkbox("Largo plazo"):
+            if agree := st.toggle("Largo plazo"):
                 df = df.query("Vencimiento >= 1500")
                 df.loc[:, "Vencimiento años"] = (df["Vencimiento"] / 365).round(
                     2
@@ -242,17 +252,20 @@ def mae():
     with col2:
         periodo = "P" if st.button("Licitaciones Futuras.") else None
     with st.spinner("Procesando.."):
-        if periodo is not None:
-            licitacion(periodo)
-        else:
-            licitacion()
-    st.markdown("---")
+        with st.container(border=True):
+            if periodo is not None:
+                licitacion(periodo)
+            else:
+                licitacion()
+    st.divider()
 
 
 def highlight_colocador(val):
-    if "SANTANDER" in val:
+    if "Santander" in val:
         return "color: red"
     elif "BBVA" in val:
+        return "color: blue"
+    elif "Cocos" in val:
         return "color: blue"
     else:
         return ""
@@ -275,13 +288,22 @@ def licitacion(periodo="A"):
             ],
         ]  # FechaInicio/FechaVencimiento/FechaLiquidacion/Titulo/Emisor/Industria/Descripcion/Moneda/AmpliableHasta/MontoaLicitar/Rueda/Modalidad/Liquidador/Estado/Tipo/Colocador/Observaciones/Resultados/InformacionAdicional/Monto_Adjudicado/Sistema_Adjudicacion/Valor_Corte/Duration/ID/ExisteArchivo/Comentario
         df = df.rename(columns={"FechaInicio": "Fecha"})
-        df = df[df["Colocador"].str.contains("SANTANDER|BBVA", case=False, na=False)]
+        df = df[
+            df["Colocador"].str.contains("SANTANDER|BBVA|Cocos", case=False, na=False)
+        ]
         # df = df.set_index(["Emisor"]).reset_index()
         dfstyle = df.style.map(highlight_colocador, subset=["Colocador"])
-        st.dataframe(dfstyle, use_container_width=True)
-        st.markdown(
-            f"\n* Para más información [MAE](https://www.mae.com.ar/mercado-primario/licitaciones#/{periodo})"
-        )
+        if not df.empty:  # Check if DataFrame is not empty
+            st.dataframe(
+                dfstyle, use_container_width=True
+            )  # Display DataFrame if it has data
+            st.markdown(
+                f"\n* Para más información [MAE](https://www.mae.com.ar/mercado-primario/licitaciones#/{periodo})"
+            )
+        else:
+            st.warning(
+                "*_No hay licitaciones disponibles en Santander, BBVA ni Cocos Capital._*"
+            )
     except KeyError:
         st.warning(
             "No hay licitaciones activas en este momento.\n\nRevisar las futuras licitaciones."
@@ -298,17 +320,32 @@ def main():
     center_running()
     clean_html()
     # fmt: off
-    tab1, tab2 = st.tabs(["📈 Mercado Abierto Electronico" ,"🗃 Bolsas y Mercados Argentinos"])
+    colored_header(
+        label="Dashboar de inversión.",
+        description="_Pagina personal para analisis de inversiones._",
+        color_name="green-70",
+    )
+    tab1, tab2 = st.tabs(["📈 MAE" ,"🗃 BYMA"])
     with tab1:
+        colored_header(
+        label="Mercado Abierto Electrónico",
+        description="_Licitaciones que tienen como colocador de deuda a BBVA, Cocos o Santander._",
+        color_name="violet-70",
+    )
         mae()
     with tab2:
+        colored_header(
+        label="Bolsas y Mercados Argentinos",
+        description="_Los precios que figuran en el panel tienen un retraso de 20 minutos._",
+        color_name="red-70",
+    )
         byma()
 
 
 def clean_html():
     hide_st_style = """
                 <style>
-                #MainMenu {visibility: hidden;}
+                MainMenu {visibility: hidden;}
                 footer {visibility: hidden;}
                 header {visibility: hidden;}
                 </style>
