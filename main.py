@@ -15,6 +15,7 @@ from os import getenv
 from dotenv import load_dotenv
 from streamlit_extras.customize_running import center_running
 from streamlit_extras.colored_header import colored_header
+import streamlit_antd_components as sac
 import requests as req
 import pandas as pd
 import streamlit as st
@@ -93,7 +94,7 @@ def highlight_variation(val):
         return ""
 
 
-@st.cache_data(show_spinner=True, experimental_allow_widgets=True)
+# @st.cache_data(show_spinner=True, experimental_allow_widgets=True)
 def byma():
     response = get_data()
     if response.status_code == 200:
@@ -135,17 +136,24 @@ def byma():
         st.code(
             f'Cantidad de oblicaciones negociables disponibles: {df["Variacion"].count()}'
         )
-        st.divider()
-        (
-            col1,
-            col2,
-        ) = st.columns(2)
-        more_options(df, col1, col2)
+        # st.divider()
+        # (
+        #     col1,
+        #     col2,
+        # ) = st.columns(2)
+        # more_options(df, col1, col2)
+        more_options(df)
     else:
         st.error(f"Error: {response.status_code}")
 
 
-def more_options(df, col1, col2):
+# def more_options(df, col1, col2):
+def more_options(df):
+    st.divider()
+    (
+        col1,
+        col2,
+    ) = st.columns(2)
     with col1:
         with st.container(border=True):
             if agree := st.checkbox("Más info:"):
@@ -154,13 +162,15 @@ def more_options(df, col1, col2):
                     description="_Informacion de amortizacion, interes, lamina, vencimiento, moneda..._",
                     color_name="violet-70",
                 )
-                deepsearch(df, agree)
+                deepsearch(df)
+                # deepsearch(df, agree)
     with col2:
         with st.container(border=True):
             if agree := st.checkbox("Cartera."):
                 cartera()
 
 
+@st.cache_data(show_spinner=True)
 def get_data():
     DATA = {
         "excludeZeroPFAndQty": True,
@@ -186,7 +196,6 @@ def options(df, col1, col2, col3, col4, col5, col6):
     with st.expander("Opciones"):
         with col1:
             if agree := st.toggle("Activas"):
-                # if agree := st.checkbox("Activas"):
                 df = df.loc[df["Ultimo operado"] != 0]  # Usando .loc
         with col2:
             if agree := st.toggle("En pesos"):
@@ -219,13 +228,21 @@ def options(df, col1, col2, col3, col4, col5, col6):
     return df
 
 
-def deepsearch(df, agree):
-    if agree:
-        ticket = list(df.index)
-        ticket = st.selectbox("", ticket)
-        with st.spinner("In progress..."):
-            df = get_detail(ticket)
-            st.dataframe(df, use_container_width=True)
+def deepsearch(df):
+    ticket = list(df.index)
+    ticket = st.selectbox("", ticket)
+    with st.spinner("In progress..."):
+        df = get_detail(ticket)
+        st.dataframe(df, use_container_width=True)
+
+
+# def deepsearch(df, agree):
+#     if agree:
+#         ticket = list(df.index)
+#         ticket = st.selectbox("", ticket)
+#         with st.spinner("In progress..."):
+#             df = get_detail(ticket)
+#             st.dataframe(df, use_container_width=True)
 
 
 def cartera():
@@ -325,15 +342,20 @@ def main():
         description="_Pagina personal para analisis de inversiones._",
         color_name="green-70",
     )
-    tab1, tab2 = st.tabs(["📈 MAE" ,"🗃 BYMA"])
-    with tab1:
+    option = sac.segmented(
+        items=[
+        sac.SegmentedItem(label='📈 MAE'),
+        sac.SegmentedItem(label="🗃 BYMA"),
+        ], format_func='upper', align='center', size='sm', radius='xl', divider=False, use_container_width=True, return_index=True
+    )
+    if option == 0:
         colored_header(
         label="Mercado Abierto Electrónico",
         description="_Licitaciones que tienen como colocador de deuda a BBVA, Cocos o Santander._",
         color_name="violet-70",
     )
         mae()
-    with tab2:
+    elif option == 1:
         colored_header(
         label="Bolsas y Mercados Argentinos",
         description="_Los precios que figuran en el panel tienen un retraso de 20 minutos._",
