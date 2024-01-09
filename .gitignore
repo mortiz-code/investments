@@ -1,6 +1,7 @@
 #Enviroment
 venv/
-__pycache__/
+.streamlit
+.devconteiner
 
 #VS Code
 .vscode/
