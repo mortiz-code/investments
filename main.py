@@ -11,8 +11,7 @@ __license__ = "BSD 3-Clause License."
 
 from csv import reader
 from os.path import isfile
-from os import getenv
-from dotenv import load_dotenv
+import os
 from streamlit_extras.customize_running import center_running
 from streamlit_extras.colored_header import colored_header
 import streamlit_antd_components as sac
@@ -23,9 +22,8 @@ import urllib3
 
 urllib3.disable_warnings()
 
-load_dotenv()
 
-TOKEN = getenv("TOKEN")
+TOKEN = st.secrets["TOKEN"]
 
 HEADERS = {
     "Content-Type": "application/json",
