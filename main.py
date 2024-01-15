@@ -34,18 +34,19 @@ HEADERS = {
 
 @st.cache_data(experimental_allow_widgets=True)
 def get_detail(symbol):
-    DATA = {"symbol": symbol, "Content-Type": "application/json"}
-    URL = "https://open.bymadata.com.ar/vanoms-be-core/rest/api/bymadata/free/bnown/fichatecnica/especies/general"
-    r = req.post(URL, timeout=10, json=DATA, headers=HEADERS, verify=False)
-    if r.status_code == 200:
-        try:
-            return format_response(r)
-        except KeyError:
-            st.warning("La ON no cuenta con informacion disponible.")
-    else:
-        st.warning(
-            f"Especie no encontrada {symbol}.\nLlamar al banco y/o buscar código ISIN."
-        )
+    with st.spinner("In progress..."):
+        DATA = {"symbol": symbol, "Content-Type": "application/json"}
+        URL = "https://open.bymadata.com.ar/vanoms-be-core/rest/api/bymadata/free/bnown/fichatecnica/especies/general"
+        r = req.post(URL, timeout=10, json=DATA, headers=HEADERS, verify=False)
+        if r.status_code == 200:
+            try:
+                return format_response(r)
+            except KeyError:
+                st.warning("La ON no cuenta con informacion disponible.")
+        else:
+            st.warning(
+                f"Especie no encontrada {symbol}.\nLlamar al banco y/o buscar código ISIN."
+            )
 
 
 def format_response(r):
@@ -71,14 +72,14 @@ def format_response(r):
             "paisLey": "Ley",
             "moneda": "Moneda",
             "formaAmortizacion": "Amortizacion",
-            "fechaVencimiento": "Vencimiento",
+            "fechaVencimiento": "Vencimiento en días",
             "fechaDevenganIntereses": "Devenga interes",
         }
     )
     df = df.set_index(["Emisor"])
     df = df.iloc[0]
     df["Devenga interes"] = pd.to_datetime(df["Devenga interes"]).date()
-    df["Vencimiento"] = pd.to_datetime(df["Vencimiento"]).date()
+    df["Vencimiento en días"] = pd.to_datetime(df["Vencimiento en días"]).date()
     df = df.dropna()
     return df
 
@@ -92,57 +93,52 @@ def highlight_variation(val):
         return ""
 
 
-# @st.cache_data(show_spinner=True, experimental_allow_widgets=True)
 def byma():
-    response = get_data()
-    if response.status_code == 200:
-        df = pd.DataFrame(response.json())
-        df = df.loc[
-            :,
-            [
-                "symbol",
-                "denominationCcy",
-                "daysToMaturity",
-                "settlementPrice",
-                "imbalance",
-            ],
-        ]
-        df = df.rename(
-            columns={
-                "symbol": "Activo",
-                "denominationCcy": "Moneda",
-                "daysToMaturity": "Vencimiento",
-                "settlementPrice": "Ultimo operado",
-                "imbalance": "Variacion",
-            }
-        )
-        pd.options.display.float_format = "{:.2f}".format
-        df = df.set_index(["Activo"])
-        df["Variacion"] = df["Variacion"] * 100
-        (
-            col1,
-            col2,
-            col3,
-            col4,
-            col5,
-            col6,
-        ) = st.columns(6)
-        df = options(df, col1, col2, col3, col4, col5, col6)
-        dfstyle = df.style.map(highlight_variation, subset=["Variacion"])
-        with st.container(border=True):
-            st.dataframe(dfstyle, use_container_width=True)
-        st.code(
-            f'Cantidad de oblicaciones negociables disponibles: {df["Variacion"].count()}'
-        )
-        # st.divider()
-        # (
-        #     col1,
-        #     col2,
-        # ) = st.columns(2)
-        # more_options(df, col1, col2)
-        more_options(df)
-    else:
-        st.error(f"Error: {response.status_code}")
+    with st.spinner("In progress..."):
+        response = get_data()
+        if response.status_code == 200:
+            df = pd.DataFrame(response.json())
+            df = df.loc[
+                :,
+                [
+                    "symbol",
+                    "denominationCcy",
+                    "daysToMaturity",
+                    "trade",
+                    "imbalance",
+                ],
+            ]
+            df = df.rename(
+                columns={
+                    "symbol": "Oblicación Negociable",
+                    "denominationCcy": "Moneda",
+                    "daysToMaturity": "Vencimiento en días",
+                    "trade": "Ultimo valor operado",
+                    "imbalance": "Variacion",
+                }
+            )
+            df = df.set_index(["Oblicación Negociable"])
+            df["Variacion"] = df["Variacion"] * 100
+            df["Ultimo valor operado"] = df["Ultimo valor operado"] / 100
+            (
+                col1,
+                col2,
+                col3,
+                col4,
+                col5,
+                col6,
+            ) = st.columns(6)
+
+            df = options(df, col1, col2, col3, col4, col5, col6)
+            on_count = df["Variacion"].count()
+            styled_df = df.style.format(precision=2, decimal=",", thousands=".")
+            styled_df = styled_df.map(highlight_variation, subset=["Variacion"])
+            with st.container(border=True):
+                st.dataframe(styled_df, use_container_width=True)
+            st.code(f"Cantidad de oblicaciones negociables disponibles: {on_count}")
+            more_options(df)
+        else:
+            st.error(f"Error: {response.status_code}")
 
 
 # def more_options(df, col1, col2):
@@ -161,7 +157,6 @@ def more_options(df):
                     color_name="violet-70",
                 )
                 deepsearch(df)
-                # deepsearch(df, agree)
     with col2:
         with st.container(border=True):
             if agree := st.checkbox("Cartera."):
@@ -194,7 +189,7 @@ def options(df, col1, col2, col3, col4, col5, col6):
     with st.expander("Opciones"):
         with col1:
             if agree := st.toggle("Activas"):
-                df = df.loc[df["Ultimo operado"] != 0]  # Usando .loc
+                df = df.loc[df["Ultimo valor operado"] != 0]  # Usando .loc
         with col2:
             if agree := st.toggle("En pesos"):
                 df = df.loc[df["Moneda"] == "ARS"]  # Usando .loc
@@ -203,24 +198,26 @@ def options(df, col1, col2, col3, col4, col5, col6):
                         usd_price = bcra_usd()
                         if price := st.number_input(
                             "Precio",
-                            value=usd_price * 100,
+                            value=usd_price,
                             step=100,
                             label_visibility="collapsed",
                         ):
-                            df = df.loc[df["Ultimo operado"] > price]  # Usando .loc
+                            df = df.loc[
+                                df["Ultimo valor operado"] > price
+                            ]  # Usando .loc
         with col4:
             if agree := st.toggle("En dolares"):
                 df = df.loc[df["Moneda"] == "USD"]  # Usando .loc
         with col5:
             if agree := st.toggle("Mediano plazo"):
-                df = df.query("Vencimiento >= 600")
-                df.loc[:, "Vencimiento años"] = (df["Vencimiento"] / 365).round(
+                df = df.query("`Vencimiento en días` >= 600")
+                df.loc[:, "Vencimiento años"] = (df["Vencimiento en días"] / 365).round(
                     2
                 )  # Usando .loc
         with col6:
             if agree := st.toggle("Largo plazo"):
-                df = df.query("Vencimiento >= 1500")
-                df.loc[:, "Vencimiento años"] = (df["Vencimiento"] / 365).round(
+                df = df.query("`Vencimiento en días` >= 1500")
+                df.loc[:, "Vencimiento años"] = (df["Vencimiento en días"] / 365).round(
                     2
                 )  # Usando .loc
     return df
@@ -232,15 +229,6 @@ def deepsearch(df):
     with st.spinner("In progress..."):
         df = get_detail(ticket)
         st.dataframe(df, use_container_width=True)
-
-
-# def deepsearch(df, agree):
-#     if agree:
-#         ticket = list(df.index)
-#         ticket = st.selectbox("", ticket)
-#         with st.spinner("In progress..."):
-#             df = get_detail(ticket)
-#             st.dataframe(df, use_container_width=True)
 
 
 def cartera():
