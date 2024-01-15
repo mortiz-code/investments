@@ -141,7 +141,6 @@ def byma():
             st.error(f"Error: {response.status_code}")
 
 
-# def more_options(df, col1, col2):
 def more_options(df):
     st.divider()
     (
@@ -189,10 +188,10 @@ def options(df, col1, col2, col3, col4, col5, col6):
     with st.expander("Opciones"):
         with col1:
             if agree := st.toggle("Activas"):
-                df = df.loc[df["Ultimo valor operado"] != 0]  # Usando .loc
+                df = df.loc[df["Ultimo valor operado"] != 0]
         with col2:
             if agree := st.toggle("En pesos"):
-                df = df.loc[df["Moneda"] == "ARS"]  # Usando .loc
+                df = df.loc[df["Moneda"] == "ARS"]
                 with col3:
                     if agree := st.checkbox("Precio de referencia"):
                         usd_price = bcra_usd()
@@ -202,24 +201,22 @@ def options(df, col1, col2, col3, col4, col5, col6):
                             step=100,
                             label_visibility="collapsed",
                         ):
-                            df = df.loc[
-                                df["Ultimo valor operado"] > price
-                            ]  # Usando .loc
+                            df = df.loc[df["Ultimo valor operado"] > price]
         with col4:
             if agree := st.toggle("En dolares"):
-                df = df.loc[df["Moneda"] == "USD"]  # Usando .loc
+                df = df.loc[df["Moneda"] == "USD"]
         with col5:
             if agree := st.toggle("Mediano plazo"):
                 df = df.query("`Vencimiento en días` >= 600")
                 df.loc[:, "Vencimiento años"] = (df["Vencimiento en días"] / 365).round(
                     2
-                )  # Usando .loc
+                )
         with col6:
             if agree := st.toggle("Largo plazo"):
                 df = df.query("`Vencimiento en días` >= 1500")
                 df.loc[:, "Vencimiento años"] = (df["Vencimiento en días"] / 365).round(
                     2
-                )  # Usando .loc
+                )
     return df
 
 
@@ -305,12 +302,9 @@ def licitacion(periodo):
                     "SANTANDER|BBVA|Cocos", case=False, na=False
                 )
             ]
-            # df = df.set_index(["Emisor"]).reset_index()
             dfstyle = df.style.map(highlight_colocador, subset=["Colocador"])
-            if not df.empty:  # Check if DataFrame is not empty
-                st.dataframe(
-                    dfstyle, use_container_width=True
-                )  # Display DataFrame if it has data
+            if not df.empty:
+                st.dataframe(dfstyle, use_container_width=True)
                 st.markdown(
                     f"\n* Para más información [MAE](https://www.mae.com.ar/mercado-primario/licitaciones#/{periodo})"
                 )
