@@ -128,21 +128,20 @@ def byma():
                 col5,
                 col6,
             ) = st.columns(6)
-
             df = options(df, col1, col2, col3, col4, col5, col6)
             on_count = df["Variacion"].count()
             styled_df = df.style.format(precision=2, decimal=",", thousands=".")
             styled_df = styled_df.map(highlight_variation, subset=["Variacion"])
             with st.container(border=True):
                 st.dataframe(styled_df, use_container_width=True)
-            st.code(f"Cantidad de oblicaciones negociables disponibles: {on_count}")
+            with st.container(border=True):
+                st.code(f"Cantidad de oblicaciones negociables disponibles: {on_count}")
             more_options(df)
         else:
             st.error(f"Error: {response.status_code}")
 
 
 def more_options(df):
-    st.divider()
     (
         col1,
         col2,
@@ -185,15 +184,15 @@ def bcra_usd():
 
 
 def options(df, col1, col2, col3, col4, col5, col6):
-    with st.expander("Opciones"):
+    with st.container(border=True):
         with col1:
-            if agree := st.toggle("Activas"):
+            if on := st.toggle("Activas"):
                 df = df.loc[df["Ultimo valor operado"] != 0]
         with col2:
-            if agree := st.toggle("En pesos"):
+            if on := st.toggle("En pesos"):
                 df = df.loc[df["Moneda"] == "ARS"]
                 with col3:
-                    if agree := st.checkbox("Precio de referencia"):
+                    if on := st.checkbox("Precio de referencia"):
                         usd_price = bcra_usd()
                         if price := st.number_input(
                             "Precio",
@@ -203,21 +202,21 @@ def options(df, col1, col2, col3, col4, col5, col6):
                         ):
                             df = df.loc[df["Ultimo valor operado"] > price]
         with col4:
-            if agree := st.toggle("En dolares"):
+            if on := st.toggle("En dolares"):
                 df = df.loc[df["Moneda"] == "USD"]
         with col5:
-            if agree := st.toggle("Mediano plazo"):
+            if on := st.toggle("Mediano plazo"):
                 df = df.query("`Vencimiento en días` >= 600")
-                df.loc[:, "Vencimiento años"] = (df["Vencimiento en días"] / 365).round(
-                    2
-                )
+                df.loc[:, "Vencimiento años"] = (
+                    df["Vencimiento en días"] / 365
+                ).round(2)
         with col6:
-            if agree := st.toggle("Largo plazo"):
+            if on := st.toggle("Largo plazo"):
                 df = df.query("`Vencimiento en días` >= 1500")
-                df.loc[:, "Vencimiento años"] = (df["Vencimiento en días"] / 365).round(
-                    2
-                )
-    return df
+                df.loc[:, "Vencimiento años"] = (
+                    df["Vencimiento en días"] / 365
+                ).round(2)
+        return df
 
 
 def deepsearch(df):
@@ -349,7 +348,7 @@ def main():
     elif option == 1:
         colored_header(
         label="Bolsas y Mercados Argentinos",
-        description="_Los precios que figuran en el panel tienen un retraso de 20 minutos._",
+        description="_Los precios que figuran en el panel tienen un retraso de ~15 minutos._",
         color_name="red-70",
     )
         byma()
